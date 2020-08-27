@@ -1,3 +1,5 @@
+#!raku
+
 use API::Discord;
 use Command::Despatch;
 use Redis::Async;
@@ -28,14 +30,16 @@ sub MAIN($token) {
 # DRY subroutine for getting the badwords key for redis
 sub badwords-redis-key($guild-id) { return "{$guild-id}-badwords" }
 
-# adds a new word to the %badwords{$guild-id} hash
-sub add-badword(%badwords, $guild-id, $new-word) {
-    %badwords{$guild-id}{$new-word} = True;
-    $redis.sadd(badwords-redis-key($guild-id), %badwords{$guild-id}.keys);
+sub add-badword(%badwords, $guild-id, $content) {
+    set-badword(%badwords, $guild-id, $content, True);
 }
 
-sub remove-badword(%badwords, $guild-id, $new-word) {
-    %badwords{$guild-id}{$new-word} = False;
+sub remove-badword(%badwords, $guild-id, $content) {
+    set-badword(%badwords, $guild-id, $content, False);
+}
+
+sub set-badword(%badwords, $guild-id, $content, $state) {
+    %badwords{$guild-id}{$content} = $state;
     $redis.sadd(badwords-redis-key($guild-id), %badwords{$guild-id}.keys);    
 }
 
@@ -47,19 +51,4 @@ sub get-badwords(@guild-ids) {
     #    }
     #}
     return @guild-ids.map({ $_ => SetHash[Str].new($redis.smembers(badwords-redis-key($_))) })
-}
-
-# caches the $badwords SetHash into Redis
-sub cache-badwords(:%badwords) {
-    ...
-}
-
-# pulls badwords from the database and populates $badwords SetHash
-sub load-badwords() {
-    ...
-}
-
-# takes the badwords from the SetHash and stores them in the database
-sub commit-badwords() {
-    ...
 }
