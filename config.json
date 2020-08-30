@@ -1,0 +1,6 @@
+{
+  "discord-token": "NjY5ODk0MDEwNTI5MjUxMzQx.Ximdag.yJfiJNHyWWQ7-P-nEHRvuHzmQQk",
+  "command-prefix": "+",
+  "redis-host": "127.0.0.1",
+  "redis-port": 6379,
+}
