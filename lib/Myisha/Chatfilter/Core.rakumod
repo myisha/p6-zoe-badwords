@@ -1,12 +1,17 @@
 unit class Myisha::Chatfilter::Core;
 use Command::Despatch;
 
+has $.discord is required;
 has $.redis is required;
 has $.commands;
 
 submethod TWEAK () {
     $!commands = Command::Despatch.new(
-        command-table => { }
+        command-table => {
+            ping => -> $self {
+                self.ping;
+            },
+        }
     );
 }
 
@@ -16,6 +21,10 @@ method despatch($str, :$payload) {
     }
 
     $.commands.run($str, :$payload);
+}
+
+method ping {
+    return content => 'pong!';
 }
 
 method add-badword(%badwords, $guild-id, $content) {
@@ -37,7 +46,7 @@ method get-badwords(@guild-ids) {
     #        whenever $redis.smembers($gid, :async) { take $gid => SetHash[Str].new(|$_) }
     #    }
     #}
-    return @guild-ids.map({ $_ => SetHash[Str].new($!redis.smembers(badwords-redis-key($_))) })
+    return @guild-ids.map({ $_ => SetHash.new($!redis.smembers(badwords-redis-key($_))) })
 }
 
 sub badwords-redis-key($guild-id) { return "{$guild-id}-badwords" }
