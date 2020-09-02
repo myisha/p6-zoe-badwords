@@ -1,7 +1,7 @@
 unit class Myisha::Chatfilter::Core;
 use Command::Despatch;
 
-has SetHash %!badwords .= new;
+has SetHash %!badwords;
 has $.discord is required;
 has $.redis is required;
 has $.commands;
@@ -26,16 +26,13 @@ submethod TWEAK () {
 }
 
 method add-badword($guild-id, *@words) {
-    self!set-badword($guild-id, True, |@words);
+    for @words { %!badwords{$guild-id}{~$_} = True }
+    $!redis.sadd(badwords-redis-key($guild-id), @words);
 }
 
 method remove-badword($guild-id, *@words) {
-    self!set-badword($guild-id, False, |@words);
-}
-
-method !set-badword($guild-id, $state, *@words) {
-    for @words { %!badwords{$guild-id}{$_} = $state }
-    $!redis.sadd(badwords-redis-key($guild-id), %!badwords{$guild-id}.keys);   
+    for @words { %!badwords{$guild-id}{~$_} = False }
+    $!redis.srem(badwords-redis-key($guild-id), @words);
 }
 
 method get-badwords(@guild-ids) {
