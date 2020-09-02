@@ -24,17 +24,17 @@ sub MAIN() {
     react {
         whenever $discord.messages -> $message {
             my $guild-id = $message.channel.guild.id;
-            given $message.content {
-                when /^"%config<command-prefix>"/ {
-                    my $cmd ~~ s/^ "%config<command-prefix>"//;
-                    my $payload = $message;
-                    my %response = $c.despatch($cmd, :$payload);
+            my $content = $message.content;
+            
+            given $content {
+                when s/^"%config<command-prefix>"// {
+                    my %response = $c.run(:str($content), :payload($message));
                     $message.channel.result.send-message(|%response);
                 }
-                default {
-                    if any(%badwords{$guild-id}.keys.map({ rx:m:i/ << $_ >> / })) {
-                        $message.delete;
-                    }
+            }
+            default {
+                if any(%badwords{$guild-id}.keys.map({ rx:m:i/ << $_ >> / })) {
+                    $message.delete;
                 }
             }
         }

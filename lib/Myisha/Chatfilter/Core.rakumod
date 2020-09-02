@@ -5,6 +5,8 @@ has $.discord is required;
 has $.redis is required;
 has $.commands;
 
+method run($str, :$payload) { $!commands.run($str, :$payload) }
+
 submethod TWEAK () {
     $!commands = Command::Despatch.new(
         command-table => {
@@ -13,14 +15,6 @@ submethod TWEAK () {
             },
         }
     );
-}
-
-method despatch($str, :$payload) {
-    CATCH {
-        when X::Command::Despatch::InvalidCommand { return; }
-    }
-
-    $.commands.run($str, :$payload);
 }
 
 method ping {
