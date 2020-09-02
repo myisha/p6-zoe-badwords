@@ -28,8 +28,8 @@ sub MAIN() {
             
             given $content {
                 when s/^"%config<command-prefix>"// {
-                    my %response = $c.run(:str($content), :payload($message));
-                    $message.channel.result.send-message(|%response);
+                    $c.run($content, :payload($message));
+                    #$message.channel.send-message(|%response);
                 }
             }
             default {

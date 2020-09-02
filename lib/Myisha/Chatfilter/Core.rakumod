@@ -1,6 +1,7 @@
 unit class Myisha::Chatfilter::Core;
 use Command::Despatch;
 
+has SetHash %!badwords .= new;
 has $.discord is required;
 has $.redis is required;
 has $.commands;
@@ -10,28 +11,31 @@ method run($str, :$payload) { $!commands.run($str, :$payload) }
 submethod TWEAK () {
     $!commands = Command::Despatch.new(
         command-table => {
-            ping => -> $self {
-                self.ping;
+            cfadd => -> $cd {
+                my $guild-id = $cd.payload.channel.guild.id;
+                my @words = $cd.args ~~ m:g/'"'<(<-[\"]>*)>'"'||\w+/;
+                self.add-badword($guild-id, |@words);
+            },
+            cfremove => -> $cd {
+                my $guild-id = $cd.payload.channel.guild.id;
+                my @words = $cd.args ~~ m:g/'"'<(<-[\"]>*)>'"'||\w+/;
+                self.remove-badword($guild-id, |@words);
             },
         }
     );
 }
 
-method ping {
-    return content => 'pong!';
+method add-badword($guild-id, *@words) {
+    self!set-badword($guild-id, True, |@words);
 }
 
-method add-badword(%badwords, $guild-id, $content) {
-    self.set-badword(%badwords, $guild-id, $content, True);
+method remove-badword($guild-id, *@words) {
+    self!set-badword($guild-id, False, |@words);
 }
 
-method remove-badword(%badwords, $guild-id, $content) {
-    self.set-badword(%badwords, $guild-id, $content, False);
-}
-
-method !set-badword(%badwords, $guild-id, $content, $state) {
-    %badwords{$guild-id}{$content} = $state;
-    $!redis.sadd(badwords-redis-key($guild-id), %badwords{$guild-id}.keys);    
+method !set-badword($guild-id, $state, *@words) {
+    for @words { %!badwords{$guild-id}{$_} = $state }
+    $!redis.sadd(badwords-redis-key($guild-id), %!badwords{$guild-id}.keys);   
 }
 
 method get-badwords(@guild-ids) {
