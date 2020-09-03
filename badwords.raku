@@ -29,12 +29,12 @@ sub MAIN() {
                     $c.run($content, :payload($message));
                     #$message.channel.send-message(|%response);
                 }
-            }
-            default {
-                if any(%badwords{$guild-id}.keys.map({ rx:m:i/ << $_ >> / })) {
-                    $message.delete;
+                default {
+                    if any(%badwords{$guild-id}.keys.map({ rx:m:i/ << $_ >> / })) {
+                        $message.delete;
+                    }
                 }
             }
         }
-    }
+    }   
 }
