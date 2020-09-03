@@ -2,29 +2,41 @@ unit class Myisha::Chatfilter::Core;
 use Command::Despatch;
 
 has SetHash %!badwords;
-has @!guild-ids is required;
+has @.guild-ids is required;
 has $.discord is required;
 has $.redis is required;
 has $.commands;
 
-method run($str, :$payload) { $!commands.run($str, :$payload) }
+method run($str, :$payload) {
+    CATCH {
+        when X::Command::Despatch::InvalidCommand { return }
+    }
+
+    $!commands.run($str, :$payload)
+}
 
 submethod TWEAK () {
     %!badwords = self!load-badwords();
     $!commands = Command::Despatch.new(
         command-table => {
-            cfadd => -> $cd {
-                my $guild-id = $cd.payload.channel.guild.id;
-                my @words = $cd.args ~~ m:g/'"'<(<-[\"]>*)>'"'||\w+/;
-                self.add-badword($guild-id, |@words);
-            },
-            cfremove => -> $cd {
-                my $guild-id = $cd.payload.channel.guild.id;
-                my @words = $cd.args ~~ m:g/'"'<(<-[\"]>*)>'"'||\w+/;
-                self.remove-badword($guild-id, |@words);
-            },
+            cf => {
+                add => -> $cd {
+                    my $guild-id = $cd.payload.channel.guild.id;
+                    my @words = $cd.args ~~ m:g/'"'<(<-[\"]>*)>'"'||\w+/;
+                    self.add-badword($guild-id, |@words);
+                },
+                remove => -> $cd {
+                    my $guild-id = $cd.payload.channel.guild.id;
+                    my @words = $cd.args ~~ m:g/'"'<(<-[\"]>*)>'"'||\w+/;
+                    self.remove-badword($guild-id, |@words);
+                },
+            }
         }
     );
+}
+
+method has-badwords($guild-id, $content) {
+    $content ~~ any(%!badwords{$guild-id}.keys.map({ rx:m:i/ << $_ >> / }))
 }
 
 method add-badword($guild-id, *@words) {
