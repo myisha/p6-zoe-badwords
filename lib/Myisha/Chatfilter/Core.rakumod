@@ -2,6 +2,7 @@ unit class Myisha::Chatfilter::Core;
 use Command::Despatch;
 
 has SetHash %!badwords;
+has @!guild-ids is required;
 has $.discord is required;
 has $.redis is required;
 has $.commands;
@@ -9,6 +10,7 @@ has $.commands;
 method run($str, :$payload) { $!commands.run($str, :$payload) }
 
 submethod TWEAK () {
+    %!badwords = load-badwords(@!guild-ids);
     $!commands = Command::Despatch.new(
         command-table => {
             cfadd => -> $cd {
@@ -35,13 +37,14 @@ method remove-badword($guild-id, *@words) {
     $!redis.srem(badwords-redis-key($guild-id), @words);
 }
 
-method get-badwords(@guild-ids) {
+method load-badwords(@!guild-ids) {
     #return gather {
     #    react for @guild-ids -> $gid {
     #        whenever $redis.smembers($gid, :async) { take $gid => SetHash[Str].new(|$_) }
     #    }
     #}
-    return @guild-ids.map({ $_ => SetHash.new($!redis.smembers(badwords-redis-key($_))) })
+    @!guild-ids.map({ $_ => SetHash.new($!redis.smembers(badwords-redis-key($_))) });
+    return @!guild-ids.map({ $_ => SetHash.new($!redis.smembers(badwords-redis-key($_))) })
 }
 
 sub badwords-redis-key($guild-id) { return "{$guild-id}-badwords" }

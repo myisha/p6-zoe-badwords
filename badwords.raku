@@ -16,10 +16,8 @@ sub MAIN() {
     $discord.connect;
     await $discord.ready;
 
-    my $c = Myisha::Chatfilter::Core.new(:$discord, :$redis);
-
     my @guild-ids = $discord.user.guilds.result.map( *.id );
-    my SetHash %badwords = $c.get-badwords(@guild-ids);
+    my $c = Myisha::Chatfilter::Core.new(:$discord, :$redis, :@guild-ids);
 
     react {
         whenever $discord.messages -> $message {
