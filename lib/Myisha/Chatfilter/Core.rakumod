@@ -24,14 +24,14 @@ submethod TWEAK () {
                 add => -> $cd {
                     if $cd.payload.channel.guild.get-member($cd.payload.author).has-any-permission([ADMINISTRATOR]) {
                         my $guild-id = $cd.payload.channel.guild.id;
-                        my @words = $cd.args ~~ m:g/'"'<(<-[\"]>*)>'"'||\w+/;
+                        my @words = $cd.args.comb(/'"' <( <-[\"]>* )> '"'||\w+/);
                         self.add-badword($guild-id, |@words);
                     } else { content => "You don't have permission to do that." }
                 },
                 remove => -> $cd {
                     if $cd.payload.channel.guild.get-member($cd.payload.author).has-any-permission([ADMINISTRATOR]) {
                         my $guild-id = $cd.payload.channel.guild.id;
-                        my @words = $cd.args ~~ m:g/'"'<(<-[\"]>*)>'"'||\w+/;
+                        my @words = $cd.args.comb(/'"' <( <-[\"]>* )> '"'||\w+/);
                         self.remove-badword($guild-id, |@words);
                     } else { content => "You don't have permission to do that." }
                 },
@@ -54,9 +54,9 @@ method add-badword($guild-id, *@words) {
 }
 
 method remove-badword($guild-id, *@words) {
-    for @words { %!badwords{$guild-id}{~$_} = False }
+    my @removed = %!badwords{$guild-id}{@words}:delete:k;
     $!redis.srem(badwords-redis-key($guild-id), @words);
-    return content => "The following terms were removed from the chatfilter: `@words.join("`, `")`.";
+    return content => "The following terms were removed from the chatfilter: `@removed.join("`, `")`.";
 }
 
 method !load-badwords() {
