@@ -1,4 +1,5 @@
 unit class Myisha::Chatfilter::Core;
+use API::Discord::Permissions;
 use Command::Despatch;
 
 has SetHash %!badwords;
@@ -21,14 +22,21 @@ submethod TWEAK () {
         command-table => {
             cf => {
                 add => -> $cd {
-                    my $guild-id = $cd.payload.channel.guild.id;
-                    my @words = $cd.args ~~ m:g/'"'<(<-[\"]>*)>'"'||\w+/;
-                    self.add-badword($guild-id, |@words);
+                    if $cd.payload.channel.guild.get-member($cd.payload.author).has-any-permission([ADMINISTRATOR]) {
+                        my $guild-id = $cd.payload.channel.guild.id;
+                        my @words = $cd.args ~~ m:g/'"'<(<-[\"]>*)>'"'||\w+/;
+                        self.add-badword($guild-id, |@words);
+                    } else { content => "You don't have permission to do that." }
                 },
                 remove => -> $cd {
-                    my $guild-id = $cd.payload.channel.guild.id;
-                    my @words = $cd.args ~~ m:g/'"'<(<-[\"]>*)>'"'||\w+/;
-                    self.remove-badword($guild-id, |@words);
+                    if $cd.payload.channel.guild.get-member($cd.payload.author).has-any-permission([ADMINISTRATOR]) {
+                        my $guild-id = $cd.payload.channel.guild.id;
+                        my @words = $cd.args ~~ m:g/'"'<(<-[\"]>*)>'"'||\w+/;
+                        self.remove-badword($guild-id, |@words);
+                    } else { content => "You don't have permission to do that." }
+                },
+                list => -> $cd {
+                    ...
                 },
             }
         }
