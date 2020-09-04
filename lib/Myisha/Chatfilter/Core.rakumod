@@ -42,11 +42,13 @@ method has-badwords($guild-id, $content) {
 method add-badword($guild-id, *@words) {
     for @words { %!badwords{$guild-id}{~$_} = True }
     $!redis.sadd(badwords-redis-key($guild-id), @words);
+    return content => "The following terms were added to the chatfilter: `@words.join("`, `")`.";
 }
 
 method remove-badword($guild-id, *@words) {
     for @words { %!badwords{$guild-id}{~$_} = False }
     $!redis.srem(badwords-redis-key($guild-id), @words);
+    return content => "The following terms were removed from the chatfilter: `@words.join("`, `")`.";
 }
 
 method !load-badwords() {
