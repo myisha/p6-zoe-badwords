@@ -55,7 +55,7 @@ submethod TWEAK () {
 }
 
 method has-badwords($guild-id, $content) {
-    $content ~~ any(%!badwords{$guild-id}.keys.map({ rx:m:i/ << $_ >> / }))
+    $content ~~ any(self!get-guild-badwords($guild-id).map({ rx:m:i/ << $_ >> / }))
 }
 
 method !get-guild-badwords($guild-id) {
