@@ -27,8 +27,13 @@ sub MAIN() {
             
             given $content {
                 when s/^"%config<command-prefix>"// {
-                    my %response = $c.run($content, :payload($message));
-                    $message.channel.send-message(|%response);
+                    try {
+                        my %response = $c.run($content, :payload($message));
+                        $message.channel.send-message(|%response);
+                        CATCH {
+                            default { }
+                        }
+                    }
                 }
                 when $c.has-badwords($guild-id, $_) {
                     $message.delete;
