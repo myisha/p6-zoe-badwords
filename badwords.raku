@@ -9,7 +9,7 @@ use Redis::Async;
 my $configuration = Myisha::Chatfilter::Configuration.new;
 my %config = $configuration.generate;
 
-my $redis = Redis::Async.new('127.0.0.1:6379');
+my $redis = Redis::Async.new("%config<redis-host>:%config<redis-port>");
 
 sub MAIN() {
     my $discord = API::Discord.new(:token(%config<discord-token>));
