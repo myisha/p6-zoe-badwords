@@ -1,7 +1,6 @@
 #!raku
 
 use API::Discord;
-use API::Discord::Permissions;
 use Myisha::Chatfilter::Core;
 use Myisha::Chatfilter::Configuration;
 use Redis::Async;
