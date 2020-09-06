@@ -42,7 +42,12 @@ submethod TWEAK () {
                     } else { content => "You don't have permission to do that." }
                 },
                 list => -> $cd {
-                    ...
+                    my $guild-id = $cd.payload.channel.guild.id;
+                    my $guild-name = $cd.payload.channel.guild.name;
+                    my @wordlist = self!get-guild-badwords($guild-id);
+                    if @wordlist {
+                        content => "**In a future version of this bot I'll DM you the list instead, for obvious reasons.**\nChatfilter wordlist for { $guild-name }: `@wordlist.join("`, `")`.";
+                    } else { content => "{$guild-name} has no words in the chatfilter."; }
                 },
             }
         }
@@ -51,6 +56,11 @@ submethod TWEAK () {
 
 method has-badwords($guild-id, $content) {
     $content ~~ any(%!badwords{$guild-id}.keys.map({ rx:m:i/ << $_ >> / }))
+}
+
+method !get-guild-badwords($guild-id) {
+    my @result = %!badwords{$guild-id}.keys;
+    return @result;
 }
 
 method !add-badword($guild-id, *@words) {
