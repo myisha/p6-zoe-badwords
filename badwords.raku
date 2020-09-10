@@ -27,7 +27,7 @@ sub MAIN() {
             
             given $content {
                 when $c.has-badwords($guild-id, $_) {
-                    if $message.author.has-any-permission([ADMINISTRATOR, MANAGE_MESSAGES]) {
+                    if $message.channel.guild.get-member($message.author).has-any-permission([ADMINISTRATOR, MANAGE_MESSAGES]) {
                         proceed;
                     }
                     else {
@@ -35,7 +35,8 @@ sub MAIN() {
                     }
                 }
                 when s/^"%config<command-prefix>"// {
-                    $c.run($content, :payload($message));
+                    my %r = $c.run($content, :payload($message));
+                    $message.channel.send-message(|%r);
                 }
             }
         }
