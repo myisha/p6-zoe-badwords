@@ -1,6 +1,7 @@
 #!raku
 
 use API::Discord;
+use API::Discord::Permissions;
 use Myisha::Chatfilter::Core;
 use Myisha::Chatfilter::Configuration;
 use Redis::Async;
@@ -25,17 +26,16 @@ sub MAIN() {
             my $content = $message.content;
             
             given $content {
-                when s/^"%config<command-prefix>"// {
-                    try {
-                        my %response = $c.run($content, :payload($message));
-                        $message.channel.send-message(|%response);
-                        CATCH {
-                            default { }
-                        }
+                when $c.has-badwords($guild-id, $_) {
+                    if $message.author.has-any-permission([ADMINISTRATOR, MANAGE_MESSAGES]) {
+                        proceed;
+                    }
+                    else {
+                        $message.delete;
                     }
                 }
-                when $c.has-badwords($guild-id, $_) {
-                    $message.delete;
+                when s/^"%config<command-prefix>"// {
+                    $c.run($content, :payload($message));
                 }
             }
         }
