@@ -46,7 +46,9 @@ submethod TWEAK () {
                     my $guild-name = $cd.payload.channel.guild.name;
                     my @wordlist = self!get-guild-badwords($guild-id);
                     if @wordlist {
-                        content => "**In a future version of this bot I'll DM you the list instead, for obvious reasons.**\nChatfilter wordlist for { $guild-name }: `@wordlist.join("`, `")`.";
+                        my $dm = await $!discord.user.create-dm($cd.payload.author);
+                        $dm.send-message("`@wordlist.join("`, `")`.");
+                        content => "I sent you a DM containing the list of prohibited words.";
                     } else { content => "{$guild-name} has no words in the chatfilter."; }
                 },
             }
